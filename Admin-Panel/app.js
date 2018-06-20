@@ -1,60 +1,89 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const app = express();
 const bodyParser = require('body-parser');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user');
+const MONGODB_URI = "mongodb://GiteshMedi:shastri1@ds263590.mlab.com:63590/medicento";
+mongoose.connect(MONGODB_URI);
+mongoose.Promise = global.Promise;
 
+app.use(require('express-session')({
+    secret: "Gitesh Secret Page",
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 app.use('/assets', express.static('assets'));
 
-app.use('/profile', (req, res, next) => {
+app.get('/profile', (req, res, next) => {
     res.render('profile');
 });
 
-app.use('/pages-login', (req, res, next) => {
+app.get('/pages-login', (req, res, next) => {
     res.render('profile-login');
 });
 
-app.use('/history', (req, res, next) => {
+app.get('/history', (req, res, next) => {
     res.render('history');
 });
 
-app.use('/orders', (req, res, next) => {
+app.get('/orders', (req, res, next) => {
     res.render('orders');
 });
 
-app.use('/inventory', (req, res, next) => {
+app.get('/inventory', (req, res, next) => {
     res.render('inventory');
 });
 
-app.use('/addRetailer', (req, res, next) => {
+app.get('/addRetailer', (req, res, next) => {
     res.render('addRetailer');
 });
 
-app.use('/addDistributor', (req, res, next) => {
+app.get('/addDistributor', (req, res, next) => {
     res.render('addDistrbutor');
 });
 
-app.use('/resetPass', (req, res, next) => {
+app.get('/resetPass', (req, res, next) => {
     res.render('resetPass');
 });
 
-app.use('/contact', (req, res, next) => {
+app.get('/contact', (req, res, next) => {
     res.render('contact');
 });
 
-app.use('/addSalesPerson', (req, res, next) => {
+app.get('/addSalesPerson', (req, res, next) => {
     res.render('addSalesPerson');
 });
 
-app.use('/setting', (req, res, next) => {
+app.get('/setting', (req, res, next) => {
     res.render('setting');
 });
 
-app.use('/pages-sign-up', (req, res, next) => {
+app.get('/signup', (req, res, next) => {
     res.render('pages-sign-up');
 });
 
-
+app.post('/signup', (req, res) => {
+    const newUser = new User({
+        username: req.body.nick,
+        useremail: req.body.email
+    });
+    User.register(newUser, req.body.pass, function (err, user) {
+        if (err) {
+            console.log(err);
+            return res.render('pages-sign-up');
+        }
+            res.redirect('/profile');
+           });
+    });
 app.use('/pages-forgot-password', (req, res, next) => {
     res.render('pages-forgot-password');
 });
