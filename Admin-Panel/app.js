@@ -23,48 +23,58 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 app.use('/assets', express.static('assets'));
 
-app.get('/profile', (req, res, next) => {
-    res.render('profile');
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
+    next();
 });
 
-app.get('/pages-login', (req, res, next) => {
-    res.render('profile-login');
-});
-
-app.get('/history', (req, res, next) => {
+app.get('/history', isLoggedIn , (req, res, next) => {
     res.render('history');
 });
 
-app.get('/orders', (req, res, next) => {
+app.get('/orders', isLoggedIn, (req, res, next) => {
     res.render('orders');
 });
 
-app.get('/inventory', (req, res, next) => {
+app.get('/inventory', isLoggedIn , (req, res, next) => {
     res.render('inventory');
 });
 
-app.get('/addRetailer', (req, res, next) => {
+app.get('/addRetailer', isLoggedIn, (req, res, next) => {
     res.render('addRetailer');
 });
 
-app.get('/addDistributor', (req, res, next) => {
+app.get('/addDistributor', isLoggedIn , (req, res, next) => {
     res.render('addDistrbutor');
 });
 
-app.get('/resetPass', (req, res, next) => {
+app.get('/resetPass', isLoggedIn, (req, res, next) => {
     res.render('resetPass');
 });
 
-app.get('/contact', (req, res, next) => {
+app.get('/contact', isLoggedIn, (req, res, next) => {
     res.render('contact');
 });
 
-app.get('/addSalesPerson', (req, res, next) => {
+app.get('/addSalesPerson', isLoggedIn, (req, res, next) => {
     res.render('addSalesPerson');
 });
 
-app.get('/setting', (req, res, next) => {
+app.get('/setting', isLoggedIn, (req, res, next) => {
     res.render('setting');
+});
+
+//User Routes for login,logout,signup and profile
+
+app.get('/profile', isLoggedIn, (req, res, next) => {
+    res.render('profile');
+});
+
+app.get('/login', (req, res, next) => {
+    res.render('profile-login');
+});
+
+app.post('/login', passport.authenticate("local", { successRedirect: "/" , failureRedirect: "/login"}), (req, res) => {
 });
 
 app.get('/signup', (req, res, next) => {
@@ -84,13 +94,34 @@ app.post('/signup', (req, res) => {
             res.redirect('/profile');
            });
     });
-app.use('/pages-forgot-password', (req, res, next) => {
+
+app.get('/logout', (req, res) => {
+    req.logout();
+    res.redirect('/');
+});
+
+app.get('/forgot-password', (req, res, next) => {
     res.render('pages-forgot-password');
 });
 
+
 app.use('/', (req, res, next) => {
-    res.render('index', {user_name: "Gitesh Shastri" });
+    User.find()
+        .exec()
+        .then(docs => {
+            res.render('index', { currentUser: req.user, count: docs.length });
+        })
+        .catch(err => {
+            console.log(err);
+            res.send(err);
+        });
 });
 
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/login');
+};
 
 module.exports = app;
